@@ -13,6 +13,7 @@
 | p5 | 2026-08-27 | Arquitectura UI | Módulo de Canastas y Galerías: Generador de biseles inferiores y soportes para piedras centrales. | `pendiente` |
 | p6 | 2026-08-27 | Visión Administrativa | Cotizador Administrativo ($/g metal + gemas + mano de obra) y Generador de Ficha Técnica (HTML/PDF). | `pendiente` |
 | p7 | 2026-08-27 | Visión Administrativa | Verificador de Seguridad para Impresión 3D/Fundición (Grosor mínimo < 0.8mm y compensación de merma %). | `pendiente` |
+| p9 | 2026-09-08 | Iconos de Gemas — Estilos | **Selector de estilo visual de iconos:** Botón o EnumProperty (marquise / round / asscher) para elegir qué set de iconos de gemas se muestra en el panel. Ubicación en UI por definir. Al elegir, el addon copia el estilo activo desde `assets/gems/styles/{estilo}/` hacia `assets/gems/png/` o usa una ruta dinámica. Requiere que los 3 estilos estén completos. | `pendiente` |
 
 - **Estados:** `pendiente`, `en progreso`, `promovido_a_task`, `descartado`, `hecho`.
 

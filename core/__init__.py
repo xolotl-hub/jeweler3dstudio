@@ -5,18 +5,16 @@ Registers core property groups, geometry operators, and calculation modules.
 
 from . import ring
 from . import gems
-from . import prongs
-from . import cutters
-from . import pave
-from . import metrics
+
+# Módulos secundarios desconectados por el momento
+# from . import prongs
+# from . import cutters
+# from . import pave
+# from . import metrics
 
 modules = (
     ring,
     gems,
-    prongs,
-    cutters,
-    pave,
-    metrics,
 )
 
 

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs><radialGradient id="br" cx="35%" cy="30%">
+      <stop offset="0%" stop-color="#d4956a"/>
+      <stop offset="40%" stop-color="#a0632a"/>
+      <stop offset="100%" stop-color="#5c3010"/>
+    </radialGradient>
+    <radialGradient id="br2" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#b07840"/>
+      <stop offset="100%" stop-color="#3d1e08"/>
+    </radialGradient></defs>
+<rect width="256" height="256" rx="28" fill="#1e0e04"/>
+<polygon points="227.34,169.15 169.15,227.34 86.85,227.34 28.66,169.15 28.66,86.85 86.85,28.66 169.15,28.66 227.34,86.85" fill="url(#br)" stroke="#1e0e04" stroke-width="3"/>
+<polygon points="203.50,159.27 159.27,203.50 96.73,203.50 52.50,159.27 52.50,96.73 96.73,52.50 159.27,52.50 203.50,96.73" fill="url(#br2)"/>
+<polygon points="175.68,147.75 147.75,175.68 108.25,175.68 80.32,147.75 80.32,108.25 108.25,80.32 147.75,80.32 175.68,108.25" fill="#2e1008" stroke="#c08040" stroke-width="1"/>
+<line x1="227.34" y1="169.15" x2="203.50" y2="159.27" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="169.15" y1="227.34" x2="159.27" y2="203.50" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="86.85" y1="227.34" x2="96.73" y2="203.50" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="28.66" y1="169.15" x2="52.50" y2="159.27" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="28.66" y1="86.85" x2="52.50" y2="96.73" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="86.85" y1="28.66" x2="96.73" y2="52.50" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="169.15" y1="28.66" x2="159.27" y2="52.50" stroke="#3e1808" stroke-width="1.5"/>
+<line x1="227.34" y1="86.85" x2="203.50" y2="96.73" stroke="#3e1808" stroke-width="1.5"/>
+<path d="M61.33760000000001,97.89439999999999 Q108.6464,50.5856 168.8576,72.08959999999999" fill="none" stroke="#e8b870" stroke_width="2" opacity="0.38" stroke-linecap="round"/>
+</svg>

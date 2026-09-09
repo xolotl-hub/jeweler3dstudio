@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="cb"/>
+      <feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow2" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="9" result="cb2"/>
+      <feMerge><feMergeNode in="cb2"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter></defs>
+<rect width="256" height="256" rx="28" fill="#030008"/>
+<path d="M53.760000000000005,35.84 L202.24,35.84 L220.16,53.760000000000005 L220.16,202.24 L202.24,220.16 L53.760000000000005,220.16 L35.84,202.24 L35.84,53.760000000000005 Z" fill="none" stroke="#00ffee" stroke-width="3" filter="url(#glow2)"/>
+<path d="M53.760000000000005,35.84 L202.24,35.84 L220.16,53.760000000000005 L220.16,202.24 L202.24,220.16 L53.760000000000005,220.16 L35.84,202.24 L35.84,53.760000000000005 Z" fill="none" stroke="#00ffee" stroke-width="1.5"/>
+<path d="M79.36,69.12 L176.64,69.12 L186.88,79.36 L186.88,176.64 L176.64,186.88 L79.36,186.88 L69.12,176.64 L69.12,79.36 Z" fill="none" stroke="#ff00cc" stroke-width="2" filter="url(#glow)"/>
+<line x1="53.76" y1="35.84" x2="79.36" y2="69.12" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="202.24" y1="35.84" x2="176.64" y2="69.12" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="35.84" y1="53.76" x2="69.12" y2="79.36" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="220.16" y1="53.76" x2="186.88" y2="79.36" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="53.76" y1="220.16" x2="79.36" y2="186.88" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="202.24" y1="220.16" x2="176.64" y2="186.88" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="35.84" y1="202.24" x2="69.12" y2="176.64" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<line x1="220.16" y1="202.24" x2="186.88" y2="176.64" stroke="#8800ff" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+<circle cx="128.00" cy="128.00" r="5.50" fill="#ff00cc" filter="url(#glow2)"/>
+</svg>

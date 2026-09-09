@@ -1,28 +1,8 @@
 # Reporte de Revisión de Trabajo (`overview/work_review.md`)
 
-Work Review Status — 2026-09-01 [Claude Sonnet 4.6 (Thinking)]
-- Tarea Activa  : Ninguna (Tarea w21 completada)
-- Pendientes    : 6 pendientes registrados en pendientes.md (`p1`, `p3` a `p7`)
-- Deuda Técnica : 0 alta, 0 media (1 archivo >250L: `ui/panels.py` 347L)
-- Backlog Master: 0 tareas abiertas en work.md (21 completadas en Historial)
-- Próximo paso  : Desarrollar `p1` (Perfiles del Metal: Media Caña, Plano, Confort).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Work Review Status — 2026-09-08 [OpenAI GPT-5]
+- Tarea Activa  : Ninguna (siguiente: `p1` — perfiles de anillo)
+- Pendientes    : 8 (`p1`-`p7`, `p9`); `p2` requiere consolidación tras validación Blender
+- Deuda Técnica : 0 alta, 2 media (`d2`, `d5`), 2 baja (`d4`, `d6`)
+- Backlog Master: 2 no verificados (`flag-p2`, `flag-w22`); 23 completadas
+- Próximo paso  : Validar visor y gizmo en Blender; consolidar flags; continuar `p1`

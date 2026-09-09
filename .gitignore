@@ -11,3 +11,6 @@ __pycache__/
 # Local build assets & legacy reference
 jeweler3dstudio.zip
 overview/legacy/
+assets_historial/
+dist/
+staging_pkg/

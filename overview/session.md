@@ -1,35 +1,22 @@
 # Sesión actual
 
-- Fecha: 2026-09-01
-- Agente: Claude Sonnet 4.6 (Thinking)
-- Nodo activo: CERRADO — prox. sesión: Geometría BMesh de diamante con datos de JewelCraft
-- Estado validación: `verificado`
+- Fecha: 2026-09-08
+- Agente: OpenAI GPT-5
+- Nodo activo: `p1` (Perfiles de Metal en Anillo y Talla)
+- Estado validación: `no aplica`
 
 ## Cambios
 
-- `w17` Corregido RuntimeError en `create_ring_bezier_curve` (`spline.bezier_points.add`).
-- `w18` Operador `J3D_OT_add_gem` implementado en `core/gems.py`.
-- `w19` Restaurado `J3D_OT_dummy_cube` — devueltos botones a todos los subpaneles UI.
-- `w20` Cubo de 5mm en `J3D_OT_dummy_cube` (1 BU = 1 mm).
-- `w21` Conectado `j3d.add_gem` al Visor de Gemas (`ui/panels.py`).
-- Bug crítico: `icon='GEM'` no existe en Blender 5.2 → corregido a `icon='MESH_ICOSPHERE'`.
-- Botón "Añadir Diamante (5 mm)" funcional — genera cono primitivo 16 vértices (pabellión).
-- Corona pendiente: usuario aportara datos de malla JewelCraft (verts+faces) en próxima sesión.
+- Handoff de Gemini 3.7 Flash (Medium) → Composer.
+- Handoff de Composer → OpenAI GPT-5.
+- Handoff de Claude Sonnet 4.6 (Thinking) → Gemini 3.7 Flash (Medium).
+- `w22` Completada: Integradas mallas 3D reales de 17 cortes desde `assets/gems/gems.blend` vía `bpy.data.libraries.load`, iconos PNG con `bpy.utils.previews`, selector interactivo en Visor de Gemas (`ui/panels.py`), materiales BSDF y estimador de peso en quilates. Resuelta deuda `d1` y pendiente `p2`.
+- `w23`: Generados 17 iconos vectoriales de lujo (SVG + PNG 256x256 en `assets/gems/dark` y `assets/gems/light`), respaldo de antiguos a `assets_historial/` e integración de `bpy.utils.previews` con `template_icon_view` en el Visor de Gemas (`core/gems.py`, `ui/panels.py`).
+- `w22`: Corregido error en Gizmo `GIZMO_GT_arrow_3d` (`ui/gizmos.py`) eliminando llamada a propiedad inválida `target_set_prop("matrix", ...)` y asignando `matrix_basis` en `refresh()`.
+- Re-empaquetada extensión en `dist/jeweler3dstudio-0.1.0.zip` (609.7 KB).
 
 ## Reanudar
 
-- Siguiente nodo/tarea: Construir geometría BMesh completa del diamante (corona + filetín + pabellión)
-- Agente que reanuda: Claude Sonnet 4.6 (Thinking)
-- Contexto crítico: Usuario traerá datos JSON de malla JewelCraft (verts + faces). Usar ese input para reemplazar el `primitive_cone_add` en `J3D_OT_add_gem` (`core/gems.py`) con BMesh real. `icon='GEM'` NO existe en Blender 5.2 — usar iconos de la lista válida.
-
-## Cambios
-
-- Completada tarea `w21`: Reemplazado `j3d.dummy_cube` por `j3d.add_gem` en `ui/panels.py`. Botón "Añadir Diamante (5 mm)" ahora genera la gema 3D facetada.
-- Re-empaquetada extensión en `dist/jeweler3dstudio-0.1.0.zip`.
-
-## Reanudar
-
-- Siguiente nodo/tarea: Desarrollar `p1` (Perfiles de Metal en Anillo y Talla: Media Caña, Plano, Confort)
-- Agente que reanuda: Claude Sonnet 4.6 (Thinking)
-- Contexto crítico: `w21` completado. Visor de Gemas genera Diamante 3D de 5mm. 6 pendientes en `pendientes.md` (`p1`, `p3`-`p7`).
-
+- Siguiente nodo/tarea: Probar en Blender la visualización de la cuadrícula de iconos en el Visor de Gemas y continuar con `p1` (Perfiles de Metal en Anillo y Talla).
+- Agente que reanuda: OpenAI GPT-5 — 2026-09-08
+- Contexto crítico: Visor de Gemas con 17 iconos HD de lujo integrados, generación 3D procedural paramétrica y cálculo de quilates en tiempo real.selector de iconos PNG.

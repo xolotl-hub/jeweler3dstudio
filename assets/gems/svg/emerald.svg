@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs><linearGradient id="eg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d5c2e"/>
+      <stop offset="50%" stop-color="#1a9c50"/>
+      <stop offset="100%" stop-color="#083d1e"/>
+    </linearGradient>
+    <linearGradient id="eg2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#12784c"/>
+      <stop offset="100%" stop-color="#051508"/>
+    </linearGradient></defs>
+<rect width="256" height="256" rx="28" fill="#060606"/>
+<rect x="28.2" y="56.1" width="199.7" height="143.8" fill="url(#eg1)"/>
+<rect x="72.1" y="87.7" width="111.8" height="80.5" fill="url(#eg2)" stroke="#060606" stroke-width="3.2"/>
+<rect x="114.0" y="117.9" width="28.0" height="20.1" fill="url(#eg2)" stroke="#060606" stroke-width="3.2"/>
+<line x1="88.06" y1="56.12" x2="88.06" y2="199.88" stroke="#060606" stroke-width="3.2"/>
+<line x1="167.94" y1="56.12" x2="167.94" y2="199.88" stroke="#060606" stroke-width="3.2"/>
+<line x1="28.16" y1="96.37" x2="227.84" y2="96.37" stroke="#060606" stroke-width="3.2"/>
+<line x1="28.16" y1="159.63" x2="227.84" y2="159.63" stroke="#060606" stroke-width="3.2"/>
+<rect x="28.2" y="56.1" width="199.7" height="143.8" fill="none" stroke="#060606" stroke-width="4.5"/>
+<rect x="36.2" y="64.1" width="28.0" height="10.1" fill="white" opacity="0.18" rx="2"/>
+</svg>

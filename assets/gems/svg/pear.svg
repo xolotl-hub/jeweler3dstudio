@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b8f0d8"/>
+      <stop offset="100%" stop-color="#d8b4fe"/>
+    </linearGradient></defs>
+<rect width="256" height="256" rx="28" fill="#fdf4ff"/>
+<path d="M128.0,235.51999999999998 C50.5856,168.8576 22.63040000000001,104.3456 72.08959999999999,50.5856 A62.361599999999996,62.361599999999996 0 1,1 183.9104,50.5856 C233.3696,104.3456 205.4144,168.8576 128.0,235.51999999999998 Z" fill="url(#pg)" stroke="#7c3aed" stroke-width="3.5" stroke-linejoin="round"/>
+<line x1="128.00" y1="72.09" x2="128.00" y2="235.52" stroke="#7c3aed" stroke-width="1.2" opacity="0.35"/>
+<line x1="76.39" y1="122.62" x2="179.61" y2="122.62" stroke="#7c3aed" stroke-width="1.2" opacity="0.35"/>
+<line x1="95.74" y1="173.16" x2="160.26" y2="173.16" stroke="#7c3aed" stroke-width="1.2" opacity="0.35"/>
+<text x="44.1" y="54.9" font-size="18" fill="#a855f7" text-anchor="middle" dominant-baseline="central" font-family="serif">✦</text>
+<text x="216.2" y="76.4" font-size="12" fill="#6d28d9" text-anchor="middle" dominant-baseline="central" font-family="serif">✦</text>
+<text x="194.7" y="183.9" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central" font-family="serif">✦</text>
+<circle cx="108.65" cy="97.89" r="5.91" fill="white" opacity="0.8"/>
+</svg>

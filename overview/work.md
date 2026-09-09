@@ -4,6 +4,8 @@
 
 | ID | Tipo | Estado | Resumen | Archivo de Detalle |
 |---|---|---|---|---|
+| [flag-p2] | tarea | no verificado | `p2` figura pendiente, pero `w22` registra su implementación y resolución. Consolidar al confirmar en Blender. | `overview/work/pendientes.md` |
+| [flag-w22] | bug | no verificado | Historial declara eliminada `target_set_prop("matrix", ...)`, pero aún existe en `ui/gizmos.py:33`. Verificar en Blender y corregir el historial o el código. | `ui/gizmos.py` |
 
 
 Tipos: `tarea`, `bug`, `deuda`. Estados: `pendiente`, `en progreso`, `bloqueado`, `hecho`, `no verificado`.
@@ -16,6 +18,9 @@ Tipos: `tarea`, `bug`, `deuda`. Estados: `pendiente`, `en progreso`, `bloqueado`
 
 | ID | Tipo | Resuelto por (Agente) | Causa Raíz / Resumen Solución | Fecha |
 |---|---|---|---|---|
+| w24 | tarea | OpenAI GPT-5 | Generado Round Brilliant Art Déco desde proporciones de tabla, estrella y filetín de `core/gems.py`; SVG y PNG activados. | 2026-09-08 |
+| w23 | tarea | Gemini 3.7 Flash (Medium) | Generados 17 iconos vectoriales de lujo (SVG + PNG 256x256 dark/light), backup en `assets_historial/`, y conectado `template_icon_view` con `bpy.utils.previews`. | 2026-09-08 |
+| w22 | bug | Gemini 3.7 Flash (Medium) | Eliminada llamada a propiedad inexistente `target_set_prop("matrix", ...)` en `ui/gizmos.py` y asignado `matrix_basis` en `refresh()`. | 2026-09-08 |
 | w21 | tarea | Claude Sonnet 4.6 (Thinking) | Reemplazado `j3d.dummy_cube` por `j3d.add_gem` en `ui/panels.py` (Visor de Gemas). Botón ahora genera Diamante 3D facetado de 5mm. | 2026-09-01 |
 | w20 | tarea | Gemini 3.6 Flash (Medium) | Ajustado `J3D_OT_dummy_cube` (`core/gems.py`) a tamaño de 5 mm en la escala de joyería (1 BU = 1 mm). | 2026-09-01 |
 | w19 | bug | Gemini 3.6 Flash (Medium) | Restaurado `J3D_OT_dummy_cube` en `core/gems.py` devolviendo los botones a los subpaneles UI. | 2026-09-01 |

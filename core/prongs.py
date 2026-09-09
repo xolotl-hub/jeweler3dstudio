@@ -90,9 +90,36 @@ classes = (
 
 def register():
     for cls in classes:
-        bpy.utils.register_class(cls)
+        try:
+            bpy.utils.register_class(cls)
+        except ValueError:
+            try:
+                bpy.utils.unregister_class(cls)
+                bpy.utils.register_class(cls)
+            except Exception:
+                pass
 
 
 def unregister():
     for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+        try:
+            bpy.utils.unregister_class(cls)
+        except Exception:
+            pass
+            bpy.utils.register_class(cls)
+        except Exception:
+            pass
+
+
+def unregister():
+    for cls in reversed(classes):
+        if hasattr(bpy.types, cls.__name__):
+            try:
+                bpy.utils.unregister_class(getattr(bpy.types, cls.__name__))
+            except Exception:
+                pass
+        else:
+            try:
+                bpy.utils.unregister_class(cls)
+            except Exception:
+                pass

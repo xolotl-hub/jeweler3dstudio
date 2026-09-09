@@ -45,6 +45,41 @@ EXCLUDE_EXTENSIONS = {
     ".DS_Store",
 }
 
+# Dev/source asset paths — not shipped in the extension zip
+EXCLUDE_ASSET_PREFIXES = (
+    "assets/gems/dark/",
+    "assets/gems/light/",
+    "assets/gems/references/",
+    "assets/gems/svg/",
+    "assets/gems/styles/",
+)
+
+EXCLUDE_FILENAMES = {
+    "gems.blend",
+    "round_v2.png",
+    "round_v2.svg",
+}
+
+# Runtime ships only the Round icon PNG; other cuts are text-only in UI.
+EXCLUDE_ASSET_GLOB_PREFIXES = (
+    "assets/gems/png/",
+)
+
+EXCLUDE_ASSET_GLOB_KEEP = {
+    "assets/gems/png/round.png",
+}
+
+
+def should_exclude(relative_posix: str) -> bool:
+    """Return True if a file must not be included in the extension zip."""
+    if Path(relative_posix).name in EXCLUDE_FILENAMES:
+        return True
+    if any(relative_posix.startswith(prefix) for prefix in EXCLUDE_ASSET_PREFIXES):
+        return True
+    if relative_posix.startswith(EXCLUDE_ASSET_GLOB_PREFIXES[0]):
+        return relative_posix not in EXCLUDE_ASSET_GLOB_KEEP
+    return False
+
 
 def parse_manifest_info(manifest_path: Path) -> tuple[str, str]:
     """Extracts id and version from blender_manifest.toml."""
@@ -113,6 +148,8 @@ def create_extension_zip() -> Path:
 
                     if file_path.is_file():
                         arcname = str(file_path.relative_to(root_dir)).replace("\\", "/")
+                        if should_exclude(arcname):
+                            continue
                         zipf.write(file_path, arcname)
                         files_added += 1
                         total_bytes += file_path.stat().st_size

@@ -5,9 +5,10 @@ All subpanels default to closed ('DEFAULT_CLOSED') to keep UI clean, except Gem 
 """
 
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, FloatProperty
 from bpy.types import Panel, Context
 from ..core.ring import US_SIZE_ITEMS, GEOMETRY_TYPE_ITEMS
+from ..core.gems import get_cut_enum_items, STONE_ITEMS, calculate_carats, get_cut_preview_collection
 
 
 # ===================================================================
@@ -86,11 +87,37 @@ class VIEW3D_PT_j3d_sub_gem_visor(Panel):
     bl_region_type = 'UI'
     bl_category = 'Jeweler 3D'
     bl_parent_id = "VIEW3D_PT_j3d_gems"
-    # Permanece abierto por defecto para acceso rápido
-
     def draw(self, context: Context) -> None:
-        col = self.layout.column(align=True)
-        col.operator("j3d.add_gem", icon='MESH_ICOSPHERE', text="Añadir Diamante (5 mm)")
+        layout = self.layout
+        scene = context.scene
+        col = layout.column(align=True)
+
+        col.prop(scene, "j3d_gem_cut", text="Corte")
+
+        pcoll = get_cut_preview_collection()
+        if scene.j3d_gem_cut == "ROUND" and pcoll and "ROUND" in pcoll:
+            preview = col.box()
+            row = preview.row(align=True)
+            row.alignment = 'EXPAND'
+            row.scale_y = 0.75
+            row.template_icon(icon_value=pcoll["ROUND"].icon_id, scale=10)
+
+        col.separator()
+        col.prop(scene, "j3d_gem_stone", text="Piedra")
+        col.prop(scene, "j3d_gem_size", text="Tamano (mm)")
+
+        # Estimador de quilates
+        carats = calculate_carats(scene.j3d_gem_stone, scene.j3d_gem_cut, scene.j3d_gem_size)
+        box = col.box()
+        row = box.row(align=True)
+        row.alignment = 'CENTER'
+        row.label(text=f"Peso: {carats:.3f} ct", icon='INFO')
+
+        col.separator()
+        op = col.operator("j3d.add_gem", icon='MESH_ICOSPHERE', text="Anadir Gema 3D")
+        op.cut = scene.j3d_gem_cut
+        op.stone = scene.j3d_gem_stone
+        op.size = scene.j3d_gem_size
 
 
 
@@ -337,13 +364,57 @@ def register():
         default="CURVE"
     ) # type: ignore
 
+    bpy.types.Scene.j3d_gem_cut = EnumProperty(
+        name="Corte",
+        description="Seleccion de corte de la gema",
+        items=get_cut_enum_items
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_gem_stone = EnumProperty(
+        name="Piedra",
+        description="Tipo de gema / material",
+        items=STONE_ITEMS,
+        default="DIAMOND"
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_gem_size = FloatProperty(
+        name="Tamano",
+        description="Tamano de la gema en milimetros",
+        default=5.0,
+        min=0.5,
+        max=50.0,
+        step=10,
+        precision=2
+    ) # type: ignore
+
     for cls in classes:
-        bpy.utils.register_class(cls)
+        if hasattr(bpy.types, cls.__name__):
+            try:
+                bpy.utils.unregister_class(getattr(bpy.types, cls.__name__))
+            except Exception:
+                pass
+        try:
+            bpy.utils.register_class(cls)
+        except Exception:
+            pass
 
 
 def unregister():
     for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+        if hasattr(bpy.types, cls.__name__):
+            try:
+                bpy.utils.unregister_class(getattr(bpy.types, cls.__name__))
+            except Exception:
+                pass
+        else:
+            try:
+                bpy.utils.unregister_class(cls)
+            except Exception:
+                pass
 
-    del bpy.types.Scene.j3d_us_size
-    del bpy.types.Scene.j3d_geometry_type
+    for prop in ("j3d_us_size", "j3d_geometry_type", "j3d_gem_cut", "j3d_gem_stone", "j3d_gem_size"):
+        if hasattr(bpy.types.Scene, prop):
+            try:
+                delattr(bpy.types.Scene, prop)
+            except Exception:
+                pass

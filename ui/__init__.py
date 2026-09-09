@@ -3,13 +3,13 @@ Jeweler 3D Studio - UI Package Initialization
 Registers user interface panels, dialogs, and viewport gizmo groups.
 """
 
-from . import dialogs
-from . import gizmos
 from . import panels
 
+# Desconectados por el momento
+# from . import dialogs
+# from . import gizmos
+
 modules = (
-    dialogs,
-    gizmos,
     panels,
 )
 
