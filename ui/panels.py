@@ -2,13 +2,21 @@
 Jeweler 3D Studio - UI Panels Module
 Clean panel and subpanel architecture for Viewport N-Panel ('Jeweler 3D' tab).
 All subpanels default to closed ('DEFAULT_CLOSED') to keep UI clean, except Gem Visor.
+Scale standard: 1 BU = 1 mm direct jewelry modeling.
 """
 
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import EnumProperty, FloatProperty, IntProperty, BoolProperty
 from bpy.types import Panel, Context
-from ..core.ring import US_SIZE_ITEMS, GEOMETRY_TYPE_ITEMS
-from ..core.gems import get_cut_enum_items, STONE_ITEMS, calculate_carats, get_cut_preview_collection
+from ..core.ring import US_SIZE_ITEMS, GEOMETRY_TYPE_ITEMS, RING_PROFILE_ITEMS, ORIENTATION_ITEMS
+from ..core.gems import (
+    get_cut_enum_items,
+    STONE_ITEMS,
+    get_gem_size_preset_items,
+    get_effective_gem_size,
+    calculate_carats,
+    get_cut_preview_collection,
+)
 
 
 # ===================================================================
@@ -45,10 +53,13 @@ class VIEW3D_PT_j3d_sub_size(Panel):
         row = col.row(align=True)
         row.prop(scene, "j3d_geometry_type", expand=True)
 
+        col.prop(scene, "j3d_ring_orientation", text="Orientación")
+
         col.separator()
         op = col.operator("j3d.create_ring_size", icon='CURVE_NCIRCLE', text="Crear Talla")
         op.us_size = scene.j3d_us_size
         op.geometry_type = scene.j3d_geometry_type
+        op.orientation = scene.j3d_ring_orientation
 
 
 class VIEW3D_PT_j3d_sub_profile(Panel):
@@ -61,8 +72,41 @@ class VIEW3D_PT_j3d_sub_profile(Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context: Context) -> None:
-        col = self.layout.column(align=True)
-        col.operator("j3d.dummy_cube", icon='CUBE', text="Añadir Cubo (Perfil)")
+        layout = self.layout
+        scene = context.scene
+        col = layout.column(align=True)
+
+        col.prop(scene, "j3d_ring_profile", text="Perfil")
+        col.prop(scene, "j3d_ring_orientation", text="Orientación")
+        col.prop(scene, "j3d_ring_width", text="Ancho (mm)")
+        col.prop(scene, "j3d_ring_height", text="Grosor (mm)")
+
+        col.separator()
+        row_res = col.row(align=True)
+        row_res.prop(scene, "j3d_ring_radial_segments", text="Radiales")
+        row_res.prop(scene, "j3d_ring_profile_segments", text="Perfil")
+
+        col.separator()
+        box_sub = col.box()
+        box_col = box_sub.column(align=True)
+        box_col.prop(scene, "j3d_ring_use_subsurf", text="Subdivision Surface")
+        if scene.j3d_ring_use_subsurf:
+            row_sub = box_col.row(align=True)
+            row_sub.prop(scene, "j3d_ring_subsurf_levels", text="Nivel")
+            row_sub.prop(scene, "j3d_ring_crease", text="Crease")
+
+        col.separator()
+        op = col.operator("j3d.create_ring_profile", icon='MESH_CYLINDER', text="Crear Aro con Perfil")
+        op.us_size = scene.j3d_us_size
+        op.profile_type = scene.j3d_ring_profile
+        op.orientation = scene.j3d_ring_orientation
+        op.width_mm = scene.j3d_ring_width
+        op.height_mm = scene.j3d_ring_height
+        op.radial_segments = scene.j3d_ring_radial_segments
+        op.profile_segments = scene.j3d_ring_profile_segments
+        op.use_subsurf = scene.j3d_ring_use_subsurf
+        op.subsurf_levels = scene.j3d_ring_subsurf_levels
+        op.crease_value = scene.j3d_ring_crease
 
 
 # ===================================================================
@@ -87,6 +131,7 @@ class VIEW3D_PT_j3d_sub_gem_visor(Panel):
     bl_region_type = 'UI'
     bl_category = 'Jeweler 3D'
     bl_parent_id = "VIEW3D_PT_j3d_gems"
+
     def draw(self, context: Context) -> None:
         layout = self.layout
         scene = context.scene
@@ -104,22 +149,26 @@ class VIEW3D_PT_j3d_sub_gem_visor(Panel):
 
         col.separator()
         col.prop(scene, "j3d_gem_stone", text="Piedra")
-        col.prop(scene, "j3d_gem_size", text="Tamano (mm)")
+        col.prop(scene, "j3d_gem_size_preset", text="Calibre / ct")
 
-        # Estimador de quilates
-        carats = calculate_carats(scene.j3d_gem_stone, scene.j3d_gem_cut, scene.j3d_gem_size)
+        if scene.j3d_gem_size_preset == "CUSTOM":
+            col.prop(scene, "j3d_gem_size", text="Tamano (mm)")
+            effective_size = scene.j3d_gem_size
+        else:
+            effective_size = get_effective_gem_size(scene)
+
+        # Estimador de quilates dinámico
+        carats = calculate_carats(scene.j3d_gem_stone, scene.j3d_gem_cut, effective_size)
         box = col.box()
         row = box.row(align=True)
         row.alignment = 'CENTER'
-        row.label(text=f"Peso: {carats:.3f} ct", icon='INFO')
+        row.label(text=f"Calibre: {effective_size:.2f} mm  |  Peso: {carats:.3f} ct", icon='INFO')
 
         col.separator()
         op = col.operator("j3d.add_gem", icon='MESH_ICOSPHERE', text="Anadir Gema 3D")
         op.cut = scene.j3d_gem_cut
         op.stone = scene.j3d_gem_stone
-        op.size = scene.j3d_gem_size
-
-
+        op.size = effective_size
 
 
 class VIEW3D_PT_j3d_sub_gem_map(Panel):
@@ -364,6 +413,80 @@ def register():
         default="CURVE"
     ) # type: ignore
 
+    bpy.types.Scene.j3d_ring_orientation = EnumProperty(
+        name="Orientación",
+        description="Plano de orientación para la creación del anillo",
+        items=ORIENTATION_ITEMS,
+        default="FRONT"
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_profile = EnumProperty(
+        name="Perfil",
+        description="Perfil de la sección transversal del aro",
+        items=RING_PROFILE_ITEMS,
+        default="MEDIA_CANA"
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_width = FloatProperty(
+        name="Ancho",
+        description="Ancho del aro en mm",
+        default=4.0,
+        min=1.0,
+        max=20.0,
+        step=10,
+        precision=2
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_height = FloatProperty(
+        name="Grosor",
+        description="Grosor del aro en mm (crece hacia afuera del diámetro interior)",
+        default=1.8,
+        min=0.3,
+        max=10.0,
+        step=10,
+        precision=2
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_radial_segments = IntProperty(
+        name="Segmentos Radiales",
+        description="Número de divisiones circunferenciales del aro",
+        default=32,
+        min=8,
+        max=256
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_profile_segments = IntProperty(
+        name="Resolución de Perfil",
+        description="Número de subdivisiones en curvas del perfil",
+        default=12,
+        min=2,
+        max=64
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_use_subsurf = BoolProperty(
+        name="Subdivision Surface",
+        description="Añadir modificador Subdivision Surface",
+        default=True
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_subsurf_levels = IntProperty(
+        name="Nivel Subsurf",
+        description="Nivel de subdivisión para vista y render",
+        default=2,
+        min=1,
+        max=5
+    ) # type: ignore
+
+    bpy.types.Scene.j3d_ring_crease = FloatProperty(
+        name="Pliegue de Aristas (Crease)",
+        description="Factor de pliegue (Shift+E) en esquinas vivas (0.8 = pulido/lijado natural)",
+        default=0.8,
+        min=0.0,
+        max=1.0,
+        step=5,
+        precision=2
+    ) # type: ignore
+
     bpy.types.Scene.j3d_gem_cut = EnumProperty(
         name="Corte",
         description="Seleccion de corte de la gema",
@@ -377,10 +500,17 @@ def register():
         default="DIAMOND"
     ) # type: ignore
 
+    bpy.types.Scene.j3d_gem_size_preset = EnumProperty(
+        name="Calibre Comercial",
+        description="Calibres estándar comerciales del mercado según el corte seleccionado",
+        items=get_gem_size_preset_items,
+        default=0
+    ) # type: ignore
+
     bpy.types.Scene.j3d_gem_size = FloatProperty(
         name="Tamano",
-        description="Tamano de la gema en milimetros",
-        default=5.0,
+        description="Tamano de la gema en milimetros (modo personalizado)",
+        default=1.0,
         min=0.5,
         max=50.0,
         step=10,
@@ -412,7 +542,13 @@ def unregister():
             except Exception:
                 pass
 
-    for prop in ("j3d_us_size", "j3d_geometry_type", "j3d_gem_cut", "j3d_gem_stone", "j3d_gem_size"):
+    for prop in (
+        "j3d_us_size", "j3d_geometry_type", "j3d_ring_orientation",
+        "j3d_ring_profile", "j3d_ring_width", "j3d_ring_height",
+        "j3d_ring_radial_segments", "j3d_ring_profile_segments",
+        "j3d_ring_use_subsurf", "j3d_ring_subsurf_levels", "j3d_ring_crease",
+        "j3d_gem_cut", "j3d_gem_stone", "j3d_gem_size_preset", "j3d_gem_size"
+    ):
         if hasattr(bpy.types.Scene, prop):
             try:
                 delattr(bpy.types.Scene, prop)

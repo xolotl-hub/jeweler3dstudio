@@ -3,6 +3,7 @@ Jeweler 3D Studio - Core Package Initialization
 Registers core property groups, geometry operators, and calculation modules.
 """
 
+from . import units
 from . import ring
 from . import gems
 
@@ -13,6 +14,7 @@ from . import gems
 # from . import metrics
 
 modules = (
+    units,
     ring,
     gems,
 )

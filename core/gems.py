@@ -1,16 +1,18 @@
 """
 Jeweler 3D Studio - Core Gems Module
 Provides 3D gem generation, preview icon integration (17 luxury cuts),
-realistic BSDF material generation, carat estimation, and UI operators.
+realistic BSDF material generation, commercial size charts by cut, carat estimation, and UI operators.
 """
 
 import os
 import math
+from typing import Dict, List, Tuple
 import bpy
 import bmesh
 import bpy.utils.previews
 from bpy.props import EnumProperty, FloatProperty
 from bpy.types import Operator
+from .units import mm_to_bu
 
 # ── 17 Gem Cut Definitions & Icon Mappings ───────────────────────────────────
 CUT_DEFS = [
@@ -34,7 +36,7 @@ CUT_DEFS = [
 ]
 
 # ── Gem Stones & Physical Properties ─────────────────────────────────────────
-GEM_STONES = {
+GEM_STONES: Dict[str, Dict] = {
     "DIAMOND":       {"name": "Diamante",   "ior": 2.417, "density": 3.52, "color": (1.0, 1.0, 1.0, 1.0)},
     "RUBY":          {"name": "Rubi",       "ior": 1.770, "density": 4.02, "color": (0.85, 0.02, 0.08, 1.0)},
     "SAPPHIRE":      {"name": "Zafiro",     "ior": 1.770, "density": 4.02, "color": (0.05, 0.15, 0.85, 1.0)},
@@ -48,6 +50,253 @@ GEM_STONES = {
 }
 
 STONE_ITEMS = [(k, v["name"], f"Piedra {v['name']}") for k, v in GEM_STONES.items()]
+
+# ── Relative Volumetric Factors for Carat Estimation ─────────────────────────
+CUT_VOLUME_FACTORS: Dict[str, float] = {
+    "ROUND": 1.00,
+    "PRINCESS": 1.45,
+    "CUSHION": 1.25,
+    "ASSCHER": 1.35,
+    "EMERALD": 1.15,
+    "OVAL": 0.95,
+    "PEAR": 0.95,
+    "MARQUISE": 0.85,
+    "HEART": 0.95,
+    "RADIANT": 1.20,
+    "BAGUETTE": 0.90,
+    "TRILLION": 0.85,
+    "TRILLIANT": 0.85,
+    "TRIANGLE": 0.85,
+    "FLANDERS": 1.30,
+    "OCTAGON": 1.25,
+    "SQUARE": 1.40,
+}
+
+# ── Commercial Gem Sizes by Cut (International Jewelry Trade Standards) ──────
+CUT_COMMERCIAL_SIZES: Dict[str, List[Tuple[str, str, float]]] = {
+    "ROUND": [
+        ("1.0", "1.0 mm  (~0.005 ct)", 1.0),
+        ("1.3", "1.3 mm  (~0.010 ct / 1 pt)", 1.3),
+        ("1.5", "1.5 mm  (~0.015 ct)", 1.5),
+        ("1.7", "1.7 mm  (~0.020 ct / 2 pt)", 1.7),
+        ("2.0", "2.0 mm  (~0.030 ct / 3 pt)", 2.0),
+        ("2.5", "2.5 mm  (~0.060 ct / 6 pt)", 2.5),
+        ("3.0", "3.0 mm  (~0.100 ct / 1/10 ct)", 3.0),
+        ("3.5", "3.5 mm  (~0.160 ct)", 3.5),
+        ("4.0", "4.0 mm  (~0.250 ct / 1/4 ct)", 4.0),
+        ("4.5", "4.5 mm  (~0.350 ct)", 4.5),
+        ("5.0", "5.0 mm  (~0.500 ct / 1/2 ct)", 5.0),
+        ("5.5", "5.5 mm  (~0.650 ct)", 5.5),
+        ("6.0", "6.0 mm  (~0.800 ct)", 6.0),
+        ("6.5", "6.5 mm  (~1.000 ct / 1 ct)", 6.5),
+        ("7.0", "7.0 mm  (~1.250 ct)", 7.0),
+        ("7.5", "7.5 mm  (~1.500 ct / 1.5 ct)", 7.5),
+        ("8.0", "8.0 mm  (~2.000 ct / 2 ct)", 8.0),
+        ("9.0", "9.0 mm  (~3.000 ct / 3 ct)", 9.0),
+        ("10.0", "10.0 mm (~4.000 ct / 4 ct)", 10.0),
+    ],
+    "OVAL": [
+        ("4.0", "4.0 x 3.0 mm  (~0.15 ct)", 4.0),
+        ("5.0", "5.0 x 3.0 mm  (~0.25 ct)", 5.0),
+        ("6.0", "6.0 x 4.0 mm  (~0.50 ct / 1/2 ct)", 6.0),
+        ("7.0", "7.0 x 5.0 mm  (~0.85 ct)", 7.0),
+        ("8.0", "8.0 x 6.0 mm  (~1.30 ct)", 8.0),
+        ("9.0", "9.0 x 7.0 mm  (~2.00 ct / 2 ct)", 9.0),
+        ("10.0", "10.0 x 8.0 mm (~3.00 ct / 3 ct)", 10.0),
+        ("11.0", "11.0 x 9.0 mm (~4.20 ct)", 11.0),
+        ("12.0", "12.0 x 10.0 mm (~5.50 ct)", 12.0),
+    ],
+    "CUSHION": [
+        ("3.5", "3.5 x 3.5 mm  (~0.20 ct)", 3.5),
+        ("4.0", "4.0 x 4.0 mm  (~0.35 ct)", 4.0),
+        ("4.5", "4.5 x 4.5 mm  (~0.50 ct)", 4.5),
+        ("5.0", "5.0 x 5.0 mm  (~0.65 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~0.85 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~1.10 ct / 1 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.40 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~1.75 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~2.60 ct / 2.5 ct)", 8.0),
+        ("9.0", "9.0 x 9.0 mm  (~3.70 ct)", 9.0),
+    ],
+    "PEAR": [
+        ("4.0", "4.0 x 2.5 mm  (~0.12 ct)", 4.0),
+        ("5.0", "5.0 x 3.0 mm  (~0.25 ct)", 5.0),
+        ("6.0", "6.0 x 4.0 mm  (~0.50 ct / 1/2 ct)", 6.0),
+        ("7.0", "7.0 x 5.0 mm  (~0.85 ct)", 7.0),
+        ("8.0", "8.0 x 5.0 mm  (~1.10 ct / 1 ct)", 8.0),
+        ("8.5", "8.5 x 5.5 mm  (~1.30 ct)", 8.5),
+        ("9.0", "9.0 x 6.0 mm  (~1.75 ct)", 9.0),
+        ("10.0", "10.0 x 7.0 mm (~2.50 ct / 2.5 ct)", 10.0),
+        ("11.0", "11.0 x 7.5 mm (~3.50 ct)", 11.0),
+        ("12.0", "12.0 x 8.0 mm (~4.50 ct)", 12.0),
+    ],
+    "MARQUISE": [
+        ("4.0", "4.0 x 2.0 mm  (~0.10 ct)", 4.0),
+        ("5.0", "5.0 x 2.5 mm  (~0.18 ct)", 5.0),
+        ("6.0", "6.0 x 3.0 mm  (~0.30 ct)", 6.0),
+        ("7.0", "7.0 x 3.5 mm  (~0.50 ct / 1/2 ct)", 7.0),
+        ("8.0", "8.0 x 4.0 mm  (~0.75 ct)", 8.0),
+        ("9.0", "9.0 x 4.5 mm  (~1.00 ct / 1 ct)", 9.0),
+        ("10.0", "10.0 x 5.0 mm (~1.50 ct / 1.5 ct)", 10.0),
+        ("11.0", "11.0 x 5.5 mm (~2.00 ct / 2 ct)", 11.0),
+        ("12.0", "12.0 x 6.0 mm (~2.60 ct)", 12.0),
+    ],
+    "PRINCESS": [
+        ("1.5", "1.5 x 1.5 mm  (~0.025 ct)", 1.5),
+        ("2.0", "2.0 x 2.0 mm  (~0.050 ct)", 2.0),
+        ("2.5", "2.5 x 2.5 mm  (~0.100 ct)", 2.5),
+        ("3.0", "3.0 x 3.0 mm  (~0.180 ct)", 3.0),
+        ("3.5", "3.5 x 3.5 mm  (~0.280 ct)", 3.5),
+        ("4.0", "4.0 x 4.0 mm  (~0.400 ct)", 4.0),
+        ("4.5", "4.5 x 4.5 mm  (~0.550 ct)", 4.5),
+        ("5.0", "5.0 x 5.0 mm  (~0.750 ct / 3/4 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~1.000 ct / 1 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~1.250 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.550 ct / 1.5 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~2.000 ct / 2 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~3.000 ct / 3 ct)", 8.0),
+    ],
+    "BAGUETTE": [
+        ("2.5", "2.5 x 1.5 mm  (~0.03 ct)", 2.5),
+        ("3.0", "3.0 x 1.5 mm  (~0.05 ct)", 3.0),
+        ("3.5", "3.5 x 1.75 mm (~0.08 ct)", 3.5),
+        ("4.0", "4.0 x 2.0 mm  (~0.12 ct)", 4.0),
+        ("4.5", "4.5 x 2.25 mm (~0.18 ct)", 4.5),
+        ("5.0", "5.0 x 2.5 mm  (~0.25 ct / 1/4 ct)", 5.0),
+        ("6.0", "6.0 x 3.0 mm  (~0.45 ct)", 6.0),
+        ("7.0", "7.0 x 3.5 mm  (~0.75 ct)", 7.0),
+    ],
+    "SQUARE": [
+        ("1.5", "1.5 x 1.5 mm  (~0.025 ct)", 1.5),
+        ("2.0", "2.0 x 2.0 mm  (~0.050 ct)", 2.0),
+        ("2.5", "2.5 x 2.5 mm  (~0.100 ct)", 2.5),
+        ("3.0", "3.0 x 3.0 mm  (~0.180 ct)", 3.0),
+        ("3.5", "3.5 x 3.5 mm  (~0.280 ct)", 3.5),
+        ("4.0", "4.0 x 4.0 mm  (~0.400 ct)", 4.0),
+        ("5.0", "5.0 x 5.0 mm  (~0.750 ct)", 5.0),
+        ("6.0", "6.0 x 6.0 mm  (~1.250 ct)", 6.0),
+        ("7.0", "7.0 x 7.0 mm  (~2.000 ct)", 7.0),
+    ],
+    "EMERALD": [
+        ("4.0", "4.0 x 2.0 mm  (~0.12 ct)", 4.0),
+        ("5.0", "5.0 x 3.0 mm  (~0.30 ct)", 5.0),
+        ("6.0", "6.0 x 4.0 mm  (~0.60 ct)", 6.0),
+        ("7.0", "7.0 x 5.0 mm  (~1.00 ct / 1 ct)", 7.0),
+        ("8.0", "8.0 x 6.0 mm  (~1.75 ct)", 8.0),
+        ("9.0", "9.0 x 7.0 mm  (~2.75 ct)", 9.0),
+        ("10.0", "10.0 x 8.0 mm (~3.80 ct / 4 ct)", 10.0),
+        ("11.0", "11.0 x 9.0 mm (~5.20 ct)", 11.0),
+        ("12.0", "12.0 x 10.0 mm (~7.00 ct)", 12.0),
+    ],
+    "ASSCHER": [
+        ("3.0", "3.0 x 3.0 mm  (~0.18 ct)", 3.0),
+        ("3.5", "3.5 x 3.5 mm  (~0.28 ct)", 3.5),
+        ("4.0", "4.0 x 4.0 mm  (~0.42 ct)", 4.0),
+        ("4.5", "4.5 x 4.5 mm  (~0.58 ct)", 4.5),
+        ("5.0", "5.0 x 5.0 mm  (~0.78 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~1.00 ct / 1 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~1.30 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.65 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~2.10 ct / 2 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~3.20 ct)", 8.0),
+    ],
+    "RADIANT": [
+        ("4.5", "4.5 x 3.5 mm  (~0.35 ct)", 4.5),
+        ("5.0", "5.0 x 4.0 mm  (~0.50 ct / 1/2 ct)", 5.0),
+        ("6.0", "6.0 x 4.5 mm  (~0.85 ct)", 6.0),
+        ("6.5", "6.5 x 5.0 mm  (~1.10 ct / 1 ct)", 6.5),
+        ("7.0", "7.0 x 5.5 mm  (~1.50 ct)", 7.0),
+        ("8.0", "8.0 x 6.0 mm  (~2.20 ct / 2 ct)", 8.0),
+        ("9.0", "9.0 x 7.0 mm  (~3.30 ct)", 9.0),
+    ],
+    "FLANDERS": [
+        ("3.0", "3.0 x 3.0 mm  (~0.15 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.35 ct)", 4.0),
+        ("5.0", "5.0 x 5.0 mm  (~0.70 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~0.95 ct / 1 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~1.20 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.55 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~2.00 ct / 2 ct)", 7.0),
+    ],
+    "OCTAGON": [
+        ("3.0", "3.0 x 3.0 mm  (~0.15 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.35 ct)", 4.0),
+        ("5.0", "5.0 x 5.0 mm  (~0.70 ct)", 5.0),
+        ("6.0", "6.0 x 6.0 mm  (~1.20 ct)", 6.0),
+        ("7.0", "7.0 x 7.0 mm  (~2.00 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~3.00 ct)", 8.0),
+    ],
+    "HEART": [
+        ("3.0", "3.0 x 3.0 mm  (~0.12 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.25 ct / 1/4 ct)", 4.0),
+        ("4.5", "4.5 x 4.5 mm  (~0.38 ct)", 4.5),
+        ("5.0", "5.0 x 5.0 mm  (~0.50 ct / 1/2 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~0.75 ct / 3/4 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~1.00 ct / 1 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.30 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~1.65 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~2.20 ct / 2 ct)", 8.0),
+    ],
+    "TRILLION": [
+        ("3.0", "3.0 x 3.0 mm  (~0.10 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.22 ct)", 4.0),
+        ("4.5", "4.5 x 4.5 mm  (~0.32 ct)", 4.5),
+        ("5.0", "5.0 x 5.0 mm  (~0.45 ct)", 5.0),
+        ("5.5", "5.5 x 5.5 mm  (~0.65 ct)", 5.5),
+        ("6.0", "6.0 x 6.0 mm  (~0.85 ct)", 6.0),
+        ("6.5", "6.5 x 6.5 mm  (~1.05 ct / 1 ct)", 6.5),
+        ("7.0", "7.0 x 7.0 mm  (~1.35 ct)", 7.0),
+        ("8.0", "8.0 x 8.0 mm  (~2.10 ct / 2 ct)", 8.0),
+    ],
+    "TRILLIANT": [
+        ("3.0", "3.0 x 3.0 mm  (~0.10 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.22 ct)", 4.0),
+        ("5.0", "5.0 x 5.0 mm  (~0.45 ct)", 5.0),
+        ("6.0", "6.0 x 6.0 mm  (~0.85 ct)", 6.0),
+        ("7.0", "7.0 x 7.0 mm  (~1.35 ct)", 7.0),
+    ],
+    "TRIANGLE": [
+        ("3.0", "3.0 x 3.0 mm  (~0.10 ct)", 3.0),
+        ("4.0", "4.0 x 4.0 mm  (~0.22 ct)", 4.0),
+        ("5.0", "5.0 x 5.0 mm  (~0.45 ct)", 5.0),
+        ("6.0", "6.0 x 6.0 mm  (~0.85 ct)", 6.0),
+        ("7.0", "7.0 x 7.0 mm  (~1.35 ct)", 7.0),
+    ],
+}
+
+GLOBAL_COMMERCIAL_SIZES = CUT_COMMERCIAL_SIZES["ROUND"]
+
+
+def get_gem_size_preset_items(self, context) -> List[Tuple[str, str, str, int, int]]:
+    """Callback dinámico para EnumProperty que entrega los calibres comerciales según el corte activo."""
+    cut_key = getattr(context.scene, "j3d_gem_cut", "ROUND") if context and context.scene else "ROUND"
+    sizes_list = CUT_COMMERCIAL_SIZES.get(cut_key, GLOBAL_COMMERCIAL_SIZES)
+
+    items = []
+    for i, (key, label, _) in enumerate(sizes_list):
+        items.append((key, label, f"Calibre comercial {label}", 0, i))
+    items.append(("CUSTOM", "Personalizado (mm libre)...", "Ajuste milimétrico manual libre", 0, len(items)))
+    return items
+
+
+def get_effective_gem_size(scene) -> float:
+    """Calcula el tamaño milimétrico efectivo según el corte y preset comercial activo."""
+    if not scene:
+        return 1.0
+    preset_key = getattr(scene, "j3d_gem_size_preset", "1.0")
+    if preset_key == "CUSTOM":
+        return getattr(scene, "j3d_gem_size", 1.0)
+
+    cut_key = getattr(scene, "j3d_gem_cut", "ROUND")
+    sizes_list = CUT_COMMERCIAL_SIZES.get(cut_key, GLOBAL_COMMERCIAL_SIZES)
+    for key, _, mm_val in sizes_list:
+        if key == preset_key:
+            return mm_val
+    try:
+        return float(preset_key)
+    except Exception:
+        return 1.0
+
 
 # ── Preview Collections Management ───────────────────────────────────────────
 _preview_collections = {}
@@ -113,11 +362,12 @@ def get_cut_enum_items(self, context):
 
 # ── Carat Weight Estimator ───────────────────────────────────────────────────
 def calculate_carats(stone_key: str, cut_key: str, size_mm: float) -> float:
-    """Calcula el peso estimado en quilates basado en densidad física y volumen."""
+    """Calcula el peso estimado en quilates basado en densidad física, corte y volumen."""
     density = GEM_STONES.get(stone_key, GEM_STONES["DIAMOND"])["density"]
-    # Calibración: Diamante Redondo 5.0mm = ~0.52 ct
-    base_ct = (size_mm / 5.0) ** 3 * 0.52 * (density / 3.52)
-    return round(base_ct, 3)
+    vol_factor = CUT_VOLUME_FACTORS.get(cut_key, 1.00)
+    # Calibración: Diamante Redondo 5.0mm = ~0.50 ct
+    base_ct = (size_mm / 5.0) ** 3 * 0.50 * (density / 3.52) * vol_factor
+    return max(0.001, round(base_ct, 3))
 
 
 # ── BSDF Material Builder ────────────────────────────────────────────────────
@@ -151,15 +401,11 @@ def get_or_create_gem_material(stone_key: str):
 
 
 # ── Procedural Gem Geometry Engine ───────────────────────────────────────────
-def create_round_brilliant_mesh(name: str = "Round_Diamond_Mesh", size_mm: float = 5.0, unit_scale: float = 1.0) -> bpy.types.Mesh:
+def create_round_brilliant_mesh(name: str = "Round_Diamond_Mesh", size_mm: float = 1.0, context: object = None) -> bpy.types.Mesh:
     """Genera una malla 3D procedural paramétrica de Talla Brillante Redonda (57 facetas).
-    
-    unit_scale: context.scene.unit_settings.scale_length
-    Blender internal: 1 BU = 1 m / unit_scale
-    Conversion: size_mm → meters (/ 1000) → BU (/ unit_scale)
+    Adapta el tamaño a Blender Units según el modo de escala del addon.
     """
-    # Tamaño en Blender Units: mm → m → BU
-    diameter = (size_mm / 1000.0) / unit_scale
+    diameter = mm_to_bu(size_mm, context)
     radius = diameter / 2.0
     r_table = radius * 0.56
     r_star = radius * 0.77
@@ -179,63 +425,80 @@ def create_round_brilliant_mesh(name: str = "Round_Diamond_Mesh", size_mm: float
     # Tabla
     v_table = []
     for i in range(8):
-        angle = i * (2.0 * math.pi / 8.0) + (math.pi / 8.0)
+        angle = i * (2.0 * math.pi / 8.0)
         v_table.append(bm.verts.new((r_table * math.cos(angle), r_table * math.sin(angle), z_table)))
 
-    # Corona / Estrella
-    v_star = []
+    # Estrellas
+    v_stars = []
     for i in range(8):
-        angle = i * (2.0 * math.pi / 8.0)
-        v_star.append(bm.verts.new((r_star * math.cos(angle), r_star * math.sin(angle), z_star)))
+        angle = (i + 0.5) * (2.0 * math.pi / 8.0)
+        v_stars.append(bm.verts.new((r_star * math.cos(angle), r_star * math.sin(angle), z_star)))
 
-    # Filetín Superior
+    # Filetín Superior (16 vértices)
     v_ug = []
-    for k in range(16):
-        angle = k * (2.0 * math.pi / 16.0)
+    for i in range(16):
+        angle = i * (2.0 * math.pi / 16.0)
         v_ug.append(bm.verts.new((r_girdle * math.cos(angle), r_girdle * math.sin(angle), z_upper_girdle)))
 
-    # Filetín Inferior
+    # Filetín Inferior (16 vértices)
     v_lg = []
-    for k in range(16):
-        angle = k * (2.0 * math.pi / 16.0)
+    for i in range(16):
+        angle = i * (2.0 * math.pi / 16.0)
         v_lg.append(bm.verts.new((r_girdle * math.cos(angle), r_girdle * math.sin(angle), z_lower_girdle)))
 
+    # 2. Caras (57 Facetas)
+    # 2.1 Faceta de la Tabla (Octágono)
+    bm.faces.new(v_table)
+
+    # 2.2 Facetas Estrella (8 triángulos)
+    for i in range(8):
+        t0 = v_table[i]
+        t1 = v_table[(i + 1) % 8]
+        s0 = v_stars[i]
+        bm.faces.new((t0, t1, s0))
+
+    # 2.3 Facetas de Cometa / Kites (8 cuadriláteros)
+    for i in range(8):
+        t = v_table[i]
+        s_prev = v_stars[(i - 1) % 8]
+        s_curr = v_stars[i]
+        ug = v_ug[i * 2]
+        bm.faces.new((t, s_prev, ug, s_curr))
+
+    # 2.4 Facetas de la Corona Superior del Filetín (16 triángulos)
+    for i in range(8):
+        s = v_stars[i]
+        ug0 = v_ug[i * 2]
+        ug1 = v_ug[i * 2 + 1]
+        ug2 = v_ug[(i * 2 + 2) % 16]
+        bm.faces.new((s, ug0, ug1))
+        bm.faces.new((s, ug1, ug2))
+
+    # 2.5 Filetín / Girdle (16 quads)
+    for i in range(16):
+        u0 = v_ug[i]
+        u1 = v_ug[(i + 1) % 16]
+        l0 = v_lg[i]
+        l1 = v_lg[(i + 1) % 16]
+        bm.faces.new((u0, u1, l1, l0))
+
+    # 2.6 Pabellón Principal (8 quads o triángulos hacia culet)
+    for i in range(8):
+        l0 = v_lg[i * 2]
+        l1 = v_lg[i * 2 + 1]
+        l2 = v_lg[(i * 2 + 2) % 16]
+        bm.faces.new((v_culet, l2, l1))
+        bm.faces.new((v_culet, l1, l0))
+
     bm.verts.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
 
-    # 2. Caras
-    bm.faces.new([v_table[7], v_table[6], v_table[5], v_table[4], v_table[3], v_table[2], v_table[1], v_table[0]])
-
-    for i in range(8):
-        prev_i = (i - 1) % 8
-        bm.faces.new([v_table[prev_i], v_table[i], v_star[i]])
-
-    for i in range(8):
-        next_i = (i + 1) % 8
-        ug_idx = (2 * i + 1) % 16
-        bm.faces.new([v_table[i], v_star[next_i], v_ug[ug_idx], v_star[i]])
-
-    for i in range(8):
-        ug_mid = (2 * i + 1) % 16
-        ug_center = (2 * i) % 16
-        ug_prev = (2 * i - 1) % 16
-        bm.faces.new([v_star[i], v_ug[ug_mid], v_ug[ug_center]])
-        bm.faces.new([v_star[i], v_ug[ug_center], v_ug[ug_prev]])
-
-    for k in range(16):
-        next_k = (k + 1) % 16
-        bm.faces.new([v_ug[k], v_ug[next_k], v_lg[next_k], v_lg[k]])
-
-    for k in range(16):
-        next_k = (k + 1) % 16
-        bm.faces.new([v_culet, v_lg[k], v_lg[next_k]])
-
+    # Recalcular normales
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
 
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
-
-    mesh.update()
     return mesh
 
 
@@ -252,8 +515,7 @@ class J3D_OT_dummy_cube(Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        unit_scale = context.scene.unit_settings.scale_length or 1.0
-        cube_size = 5.0 / unit_scale
+        cube_size = mm_to_bu(5.0, context)
         bpy.ops.mesh.primitive_cube_add(
             size=cube_size,
             location=context.scene.cursor.location
@@ -271,24 +533,26 @@ class J3D_OT_add_gem(Operator):
 
     cut: EnumProperty(name="Corte", items=get_cut_enum_items)
     stone: EnumProperty(name="Piedra", items=STONE_ITEMS, default="DIAMOND")
-    size: FloatProperty(name="Tamano (mm)", default=5.0, min=0.5, max=50.0, step=10, precision=2)
+    size: FloatProperty(name="Tamano (mm)", default=0.0, min=0.0, max=50.0, step=10, precision=2)
 
     @classmethod
     def poll(cls, context):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        # Tomar valores de escena si no se pasaron como argumentos
         scene = context.scene
         cut_key = self.cut if self.cut else getattr(scene, "j3d_gem_cut", "ROUND")
         stone_key = self.stone if self.stone else getattr(scene, "j3d_gem_stone", "DIAMOND")
-        size_mm = self.size if self.size > 0.0 else getattr(scene, "j3d_gem_size", 5.0)
 
-        unit_scale = context.scene.unit_settings.scale_length or 1.0
+        if self.size > 0.0:
+            size_mm = self.size
+        else:
+            size_mm = get_effective_gem_size(scene)
+
         mesh_data = create_round_brilliant_mesh(
             name=f"Gem_{cut_key.title()}_{size_mm:.1f}mm_Mesh",
             size_mm=size_mm,
-            unit_scale=unit_scale
+            context=context
         )
 
         obj = bpy.data.objects.new(f"Gem_{stone_key.title()}_{cut_key.title()}_{size_mm:.1f}mm", mesh_data)
